@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BlazeDownloader | Descargar Videos y Música</title>
+  <meta name="description" content="Descarga videos de YouTube en múltiples calidades y formatos MP4 o MP3 en cualquier dispositivo.">
+  <meta name="theme-color" content="#0f0f11">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SnapTube">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="manifest" href="/static/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-[#0c0d14] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-red-500 selection:text-white">
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-[#13151f]/80 border-b border-white/5 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-600 via-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+        <!-- Corchea negra (blanca sobre fondo actual) -->
+        <svg class="w-5 h-5 text-white fill-current" viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
+          BlazeDownloader
+        </h1>
+        <p class="text-[11px] text-slate-400">Multiplataforma (iOS, Android, Mac, PC)</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col">
+
+    <!-- Hero / Headline -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/20 text-red-400 text-xs font-semibold mb-3">
+        <i class="fa-solid fa-bolt text-amber-400"></i>
+        <span>Rápido, sin anuncios invasivos y sin límites</span>
+      </div>
+      <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
+        Descarga Videos y Música de <span class="bg-gradient-to-r from-red-500 to-rose-400 bg-clip-text text-transparent">YouTube</span>
+      </h2>
+      <p class="text-slate-400 text-sm sm:text-base max-w-lg mx-auto">
+        Elige la calidad exacta (1080p, 720p, 480p) o extrae el audio en MP3 al instante desde cualquier dispositivo.
+      </p>
+    </div>
+
+    <!-- Search / URL Input Box -->
+    <div class="w-full relative mb-6">
+      <form id="urlForm" onsubmit="handleAnalyze(event)" class="relative flex items-center">
+        <div class="relative w-full">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-brands fa-youtube text-red-500 text-lg"></i>
+          </div>
+          <input
+            type="text"
+            id="urlInput"
+            placeholder="Pega el enlace de YouTube aquí (ej. https://youtu.be/...)"
+            required
+            autocomplete="off"
+            spellcheck="false"
+            class="w-full pl-12 pr-28 py-4 bg-[#161825] border border-white/10 focus:border-red-500/80 rounded-2xl text-white placeholder-slate-500 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-red-500/20 transition shadow-inner"
+          />
+          <!-- Paste button on desktop/mobile -->
+          <button
+            type="button"
+            onclick="pasteFromClipboard()"
+            id="pasteBtn"
+            class="absolute right-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium border border-white/5 transition flex items-center space-x-1"
+            title="Pegar del portapapeles"
+          >
+            <i class="fa-regular fa-clipboard"></i>
+            <span>Pegar</span>
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          id="submitBtn"
+          class="ml-2 sm:ml-3 px-5 sm:px-7 py-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white font-semibold text-sm sm:text-base rounded-2xl shadow-lg shadow-red-600/30 transition flex items-center justify-center shrink-0"
+        >
+          <span id="btnText" class="flex items-center space-x-2">
+            <span>Analizar</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </span>
+          <div id="btnSpinner" class="hidden items-center space-x-2">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <span class="text-xs">Cargando...</span>
+          </div>
+        </button>
+      </form>
+
+      <!-- Quick sample video chips -->
+      <div class="flex items-center justify-center flex-wrap gap-2 mt-3 text-xs text-slate-500">
+        <span>Prueba con un ejemplo:</span>
+        <button type="button" onclick="loadSample('https://www.youtube.com/watch?v=dQw4w9WgXcQ')" class="text-slate-400 hover:text-white underline hover:no-underline">Rick Astley</button>
+        <span>•</span>
+        <button type="button" onclick="loadSample('https://www.youtube.com/watch?v=jNQXAC9IVRw')" class="text-slate-400 hover:text-white underline hover:no-underline">Me at the zoo</button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="errorCard" class="hidden w-full p-4 mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 flex items-start space-x-3 text-sm">
+      <i class="fa-solid fa-circle-exclamation text-red-400 mt-0.5 text-base shrink-0"></i>
+      <div class="flex-1">
+        <p class="font-semibold text-red-200" id="errorTitle">Error al analizar el enlace</p>
+        <p class="text-red-300/90 text-xs mt-0.5" id="errorMessage">Verifica que el enlace sea correcto y que el video esté disponible públicamente.</p>
+      </div>
+      <button onclick="dismissError()" class="text-red-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Video Result Section -->
+    <div id="resultCard" class="hidden w-full flex-col bg-[#141622] border border-white/10 rounded-3xl overflow-hidden shadow-2xl transition-all">
+      <!-- Video Header / Meta -->
+      <div class="p-5 sm:p-6 bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/5 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+        <!-- Thumbnail -->
+        <div class="relative w-full sm:w-56 aspect-video rounded-2xl overflow-hidden shrink-0 bg-black/50 border border-white/10">
+          <img id="videoThumb" src="" alt="Thumbnail" class="w-full h-full object-cover">
+          <span id="videoDuration" class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 backdrop-blur-sm text-[11px] font-semibold text-white rounded-md">--:--</span>
+        </div>
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <h3 id="videoTitle" class="text-base sm:text-lg font-bold text-white line-clamp-2 mb-2 leading-snug">Título del Video</h3>
+          <div class="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs text-slate-400">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-user text-slate-500"></i><span id="videoAuthor" class="truncate max-w-[150px]">Canal</span></span>
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-eye text-slate-500"></i><span id="videoViews">0 vistas</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation (Video vs Audio) -->
+      <div class="px-5 sm:px-6 pt-4 flex space-x-2 border-b border-white/5">
+        <button id="tabVideo" onclick="switchTab('video')" class="pb-3 px-3 text-sm font-semibold text-red-400 border-b-2 border-red-500 flex items-center space-x-2 transition">
+          <i class="fa-solid fa-video"></i>
+          <span>Video (MP4)</span>
+          <span id="videoCountBadge" class="ml-1 text-[10px] px-1.5 py-0.2 bg-red-500/20 rounded-full">0</span>
+        </button>
+        <button id="tabAudio" onclick="switchTab('audio')" class="pb-3 px-3 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2 transition">
+          <i class="fa-solid fa-music"></i>
+          <span>Audio (MP3 / M4A)</span>
+          <span id="audioCountBadge" class="ml-1 text-[10px] px-1.5 py-0.2 bg-white/10 rounded-full">0</span>
+        </button>
+      </div>
+
+      <!-- Tab Content: Video Formats -->
+      <div id="videoFormatsSection" class="p-4 sm:p-6 space-y-2.5">
+        <div class="text-xs text-slate-400 flex items-center justify-between pb-1">
+          <span>Resolución disponible</span>
+          <span>Tamaño / Acción</span>
+        </div>
+        <div id="videoList" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Tab Content: Audio Formats -->
+      <div id="audioFormatsSection" class="hidden p-4 sm:p-6 space-y-2.5">
+        <div class="text-xs text-slate-400 flex items-center justify-between pb-1">
+          <span>Calidad de Audio</span>
+          <span>Formato / Descargar</span>
+        </div>
+        <div id="audioList" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Features / Perks Section -->
+    <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="p-5 rounded-2xl bg-[#141622]/60 border border-white/5 flex flex-col items-start">
+        <div class="w-9 h-9 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-sliders"></i>
+        </div>
+        <h4 class="font-bold text-sm text-white mb-1">Múltiples Calidades</h4>
+        <p class="text-xs text-slate-400 leading-relaxed">Elige desde 144p hasta 1080p o audio de alta fidelidad según tu conexión y espacio.</p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#141622]/60 border border-white/5 flex flex-col items-start">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-mobile-screen"></i>
+        </div>
+        <h4 class="font-bold text-sm text-white mb-1">Cualquier Dispositivo</h4>
+        <p class="text-xs text-slate-400 leading-relaxed">Accede desde Safari en iOS, Chrome en Android o tu Mac conectándote a la misma red Wi-Fi.</p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#141622]/60 border border-white/5 flex flex-col items-start">
+        <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h4 class="font-bold text-sm text-white mb-1">Privado y Local</h4>
+        <p class="text-xs text-slate-400 leading-relaxed">Se ejecuta en tu propia máquina. Sin publicidad invasiva, malware o redirecciones molestas.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Download Preparation Modal / Toast -->
+  <div id="downloadModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-[#181a28] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center mb-4">
+        <i class="fa-solid fa-cloud-arrow-down text-2xl animate-bounce"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-1">Procesando Descarga</h3>
+      <p class="text-xs text-slate-400 mb-4" id="downloadModalDesc">Preparando el archivo en la mejor calidad. Tu navegador iniciará la descarga en unos segundos...</p>
+      <div class="w-full bg-white/5 rounded-full h-2 overflow-hidden mb-3">
+        <div class="bg-gradient-to-r from-red-500 to-rose-400 h-full w-2/3 animate-pulse rounded-full"></div>
+      </div>
+      <button onclick="closeDownloadModal()" class="px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition">
+        Cerrar ventana
+      </button>
+    </div>
+  </div>
+
+  <!-- Share / Mobile QR Modal -->
+  <div id="shareModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-[#181a28] border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+      <button onclick="closeShareModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-qrcode text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1">Abrir en tu Celular o Tablet</h3>
+        <p class="text-xs text-slate-400">Escanea este código QR con la cámara de tu iPhone, iPad o Android (conectado a la misma red Wi-Fi):</p>
+      </div>
+
+      <!-- QR Container -->
+      <div class="flex justify-center my-4">
+        <div id="qrcode" class="p-3 bg-white rounded-2xl shadow-lg"></div>
+      </div>
+
+      <!-- IP Link Box -->
+      <div class="bg-black/30 rounded-2xl p-3 border border-white/5 flex items-center justify-between text-xs font-mono text-slate-300">
+        <span id="mobileUrlDisplay" class="truncate select-all mr-2">http://{{ local_ip }}:5050</span>
+        <button onclick="copyMobileUrl()" id="copyIpBtn" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-white font-sans text-xs shrink-0 transition">
+          Copiar
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-500 text-center mt-3">
+        Consejo: En Safari (iOS) o Chrome (Android), pulsa "Compartir" > "Añadir a la pantalla de inicio" para tenerla como app.
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500">
+    <p>BlazeDownloader • Para uso personal • Desarrollado por Rutver Aranda Arguello - Dj Blaze</p>
+    <p class="text-[11px] text-slate-600 mt-1">Asegúrate de respetar los términos de servicio de la plataforma y derechos de autor.</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
